@@ -3124,7 +3124,7 @@ function mSatrlar(){
 
 /** Валюта белгиси билан сумма */
 function mpul(v){
-  return S.valyuta==='USD' ? '$'+fmt(v) : fmt(v)+' сўм';
+  return S.valyuta==='USD' ? '$'+fmt(v) : fmt(v)+' TJS';
 }
 
 /** Қисқа кўриниш: 1 830 000 → 1.8 млн (метрикалар учун) */
@@ -3159,7 +3159,7 @@ function mGuruh(l,ol){
 /** Валюта танлаш тугмалари */
 function valyutaSeg(){
   function b(v){ return '<button data-val="'+v+'" class="'+(S.valyuta===v?'on':'')+'">'+
-    (v==='UZS'?'сўм':'$ USD')+'</button>' }
+    (v==='UZS'?'TJS':'$ USD')+'</button>' }
   return '<div class="seg">'+b('UZS')+b('USD')+'</div>';
 }
 
@@ -3386,7 +3386,7 @@ function filtrIzoh(l){
   var q=[
     ['Давр', davr],
     ['Сана оралиғи', oraliq],
-    ['Валюта', S.valyuta==='USD'?'AQSH доллари':'сўм'],
+    ['Валюта', S.valyuta==='USD'?'AQSH доллари':'TJS (сомони)'],
     ['Ёзувлар', fmt(l.length)+' та']
   ];
   if(S.kassa && S.kassa!=='hammasi') q.push(['Касса', S.kassa]);
@@ -3505,7 +3505,7 @@ function mUstunlar(l,rangi){
 function mIzohQuti(x){
   var q=[['Сана',dfmt(x.sana)],['Касса',x.kassa],['Асосий стадия',x.asosiy],
          ['Стадия',x.stadiya],['Кичик стадия',x.kichik],
-         ['Сумма',(x.tip==='kirim'?'+':'−')+fmt(x.summa)+(x.valyuta==='USD'?' $':' сўм')]]
+         ['Сумма',(x.tip==='kirim'?'+':'−')+fmt(x.summa)+(x.valyuta==='USD'?' $':' TJS')]]
         .filter(function(r){ return r[1] });
   return '<div class="mizq">'+
     '<div class="mizt">'+(x.izoh?esc(x.izoh):'<span class="mizyoq">Бу ёзувга изоҳ ёзилмаган</span>')+'</div>'+
@@ -4406,10 +4406,10 @@ function halqa(f,rang,olcham,qalin,ichi){
     '</svg><div class="halqa-m">'+(ichi||'')+'</div></div>';
 }
 
-/** Валюта билан сумма: $1 200 · 1 830 000 сўм */
+/** Валюта билан сумма: $1 200 · 1 830 000 TJS */
 function vPul(n,v){
   if(v==='USD') return (n<0?'−':'')+'$'+fmt(Math.abs(n));
-  return (n<0?'−':'')+fmt(Math.abs(n))+' сўм';
+  return (n<0?'−':'')+fmt(Math.abs(n))+' TJS';
 }
 
 function pvKutish(m){
@@ -4548,7 +4548,7 @@ function panelSahifa(){
   var KR=['#E0A048','#4ECB92','#6FA8DC','#A08FD0','#D77B96','#C08B5E'];
   function qoldiq(o,v,katta){
     var n=o[v];
-    return '<div class="pv-kv'+(n<0?' minus':'')+'"><span>'+(v==='USD'?'Доллар':'Сўм')+'</span>'+
+    return '<div class="pv-kv'+(n<0?' minus':'')+'"><span>'+(v==='USD'?'Доллар':'Сомони')+'</span>'+
       '<b class="num"'+(katta?' style="font-size:24px"':'')+'>'+vPul(n,v)+'</b></div>';
   }
   h+='<div class="pv-vt" style="margin:0 0 10px 2px">Кассаларда ҳозир</div>'+
@@ -4578,9 +4578,9 @@ function panelSahifa(){
   }else{
     h+='<div class="pv-kc">'+kvk.map(function(v){
       var o=kv[v], f=o.kirim-o.chiqim;
-      return '<div class="pv-kci k"><span>Кирим · '+(v==='USD'?'доллар':'сўм')+'</span><b class="num">'+vPul(o.kirim,v)+'</b></div>'+
-             '<div class="pv-kci c"><span>Чиқим · '+(v==='USD'?'доллар':'сўм')+'</span><b class="num">'+vPul(o.chiqim,v)+'</b></div>'+
-             '<div class="pv-kci"><span>Фарқ · '+(v==='USD'?'доллар':'сўм')+'</span><b class="num" style="color:'+
+      return '<div class="pv-kci k"><span>Кирим · '+(v==='USD'?'доллар':'TJS')+'</span><b class="num">'+vPul(o.kirim,v)+'</b></div>'+
+             '<div class="pv-kci c"><span>Чиқим · '+(v==='USD'?'доллар':'TJS')+'</span><b class="num">'+vPul(o.chiqim,v)+'</b></div>'+
+             '<div class="pv-kci"><span>Фарқ · '+(v==='USD'?'доллар':'TJS')+'</span><b class="num" style="color:'+
                (f<0?'var(--no)':'var(--ink)')+'">'+vPul(f,v)+'</b></div>';
     }).join('')+'</div>';
 
@@ -5387,7 +5387,7 @@ function pul(n){ if(VALYUTA_SOTUV==='USD') return '$'+fmt(n);
   else if(a>=1e6) t=String(+(a/1e6).toFixed(a>=1e8?0:2)).replace('.',',')+' млн';
   else if(a>=1e3) t=String(+(a/1e3).toFixed(1)).replace('.',',')+' минг';
   else t=fmt(a);
-  return b+t+' сўм' }
+  return b+t+' TJS' }
 
 /* 2) Сотув кесими — жадвалда БОР устун бўйича: joy (шаҳар) | davlat | produkt | manba.
       null — кесим саҳифаси менюдан олиб ташланади (масалан битта маҳсулот, шаҳар йўқ). */
