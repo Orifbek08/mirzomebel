@@ -5,7 +5,7 @@
 //  Сўровлар: ?amal=ishlab (Производство) | moliya (Финанс) | sklad (Склад) | baza (бўш — Сотув йўқ)
 //            ?amal=tekshir · ?amal=ustunlar · &yangi=1 (кешсиз)
 // =====================================================================
-var VERSIYA = '1.1';            // ҲАР ЎЗГАРИШДА ОШИРИНГ — кеш калити шунга боғлиқ (акс ҳолда 10 дақиқа эски жавоб қайтади)
+var VERSIYA = '1.2';            // ҲАР ЎЗГАРИШДА ОШИРИНГ — кеш калити шунга боғлиқ (акс ҳолда 10 дақиқа эски жавоб қайтади)
 var TZ_JADVAL = '';             // бўш = биринчи жадвалнинг вақт зонаси
 var SOZ, XARITA, TAYANCH;       // жорий бўлим (tanla() қўяди)
 
@@ -27,6 +27,7 @@ function bazaShart(){
 var SOZ_ISHLAB = {
   // ⚠ Жадвал ҳаволасини брузердан ТЎЛИҚ нусхалаб шу ерга қўйинг (скриншотдан ўқилган ID нотўғри бўлиши мумкин: I / l)
   JADVAL_ID: 'https://docs.google.com/spreadsheets/d/1QUfM8nqhGVlHlvT9887_-YprNvM_tgjeNkWhWNL-meE/edit',
+  JADVAL_NOM: 'Мирзо Мебел Производство',   // ID очилмаса — Google Drive'дан шу ном билан топилади
   VARAQ: ['Производство','Производства','Ишлаб чиқариш'],
   TASHLA: /^(план|plan|режа|инфо|info)$/i,  KESH_SONIYA: 600
 };
@@ -51,7 +52,8 @@ function ishlabShart(){ return jadvalShart(SONLI_ISHLAB, MATNLI_ISHLAB); }
 // =====================================================================
 var SOZ_MOLIYA = {
   // ⚠ Жадвал ҳаволасини брузердан ТЎЛИҚ нусхалаб шу ерга қўйинг
-  JADVAL_ID: 'https://docs.google.com/spreadsheets/d/1AK1iPCFendRxYuw5aU7FlvudP07F3IX8fCIbqbM4TOo/edit',
+  JADVAL_ID: 'https://docs.google.com/spreadsheets/d/1AK1iPCFendRxYuw5aU7FlvudP07F3IX8fCIbqbM4TOo/edit',   // ✓ ҳаволадан
+  JADVAL_NOM: 'Мирзо мебел финансе',
   VARAQ: ['Финансе','Финанс','Финансе орг','Лист1'],
   TASHLA: /база|статия|статья|стадия|инфо|info|лист6/i, VALYUTA:'UZS', KESH_SONIYA:600
 };
@@ -95,6 +97,7 @@ function moliyaShart(){
 var SOZ_SKLAD = {
   // ⚠ Жадвал ҳаволасини брузердан ТЎЛИҚ нусхалаб шу ерга қўйинг
   JADVAL_ID: 'https://docs.google.com/spreadsheets/d/1yWYptnJa3dfhIBqegx83ULYBoo2V32Kf5eMscC61KcY/edit',
+  JADVAL_NOM: 'Мирзо мебел Склад',
   VARAQ: ['База Склад','Склад'],
   TASHLA: /состояни|инфо|info/i,  KESH_SONIYA: 600
 };
@@ -175,7 +178,7 @@ function doGet(e){
 function sinov(){ Logger.log('Версия: '+VERSIYA);
   Object.keys(B).forEach(function(a){ if(B[a].jadvalsiz) return; Logger.log('========== '+a+' ==========');
     try{ tanla(a); var d=tashxisUmumiy(), j=B[a].f();
-      Logger.log('Жадвал: '+d.jadval+' · Варақ: '+d.varaq+' · Сарлавҳа: '+d.sarlavhaQatori+'-қатор · Ҳамма варақлар: '+d.varaqlar.join(', '));
+      Logger.log('Жадвал: '+d.jadval+' · ID: '+d.jadvalId+' · Варақ: '+d.varaq+' · Сарлавҳа: '+d.sarlavhaQatori+'-қатор · Ҳамма варақлар: '+d.varaqlar.join(', '));
       Logger.log('Топилди: '+JSON.stringify(d.topildi)); Logger.log('Топилмади: '+(d.topilmadi.join(', ')||'йўқ'));
       Logger.log('Ўқилди: '+j.tashxis.oqilgan+' / '+j.tashxis.jamiQator+' қатор');
       if(j.tashxis.tipQiymatlar) Logger.log('ТиП қийматлари: '+JSON.stringify(j.tashxis.tipQiymatlar));
@@ -217,9 +220,21 @@ function keshOl(k){ var c=CacheService.getScriptCache(),n=+c.get(k+'_n'); if(!n)
 function javob(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function hozir(){ return Utilities.formatDate(new Date(),tz(),'yyyy-MM-dd HH:mm:ss'); }
 function jadvalId(s){ s=String(s||'').trim(); var m=s.match(/\/d\/([a-zA-Z0-9_-]+)/); return m?m[1]:s; }
-function ochJadval(){ var id=jadvalId(SOZ.JADVAL_ID); if(!id||id.indexOf('XXXX')>-1) throw new Error('JADVAL_ID киритилмаган');
-  try{ var ss=SpreadsheetApp.openById(id); if(!_tz&&!TZ_JADVAL) _tz=ss.getSpreadsheetTimeZone(); return ss; }
-  catch(e){ throw new Error('Illegal spreadsheet id — JADVAL_ID нотўғри ёки жадвалга рухсат йўқ ('+(e.message||e)+')'); } }
+// Жадвални очади: 1) JADVAL_ID  2) аввал номдан топилган ID (сақланган)  3) Google Drive'дан JADVAL_NOM бўйича қидириш.
+// Скриншотдан ўқилган ID'да I / l адашса ҳам, ном бўйича топилади.
+function ochJadval(){ var id=jadvalId(SOZ.JADVAL_ID), xato='';
+  if(id&&id.indexOf('XXXX')<0){ try{ return tzQoy(SpreadsheetApp.openById(id)); }catch(e){ xato=String(e.message||e); } }
+  if(SOZ.JADVAL_NOM){
+    var pr=PropertiesService.getScriptProperties(), kalit='ID_'+SOZ.JADVAL_NOM, eski=pr.getProperty(kalit);
+    if(eski){ try{ return tzQoy(SpreadsheetApp.openById(eski)); }catch(e){ pr.deleteProperty(kalit); } }
+    var it=DriveApp.getFilesByName(SOZ.JADVAL_NOM), eng=null;
+    while(it.hasNext()){ var f=it.next(); if(f.getMimeType()!==MimeType.GOOGLE_SHEETS) continue;
+      if(!eng||f.getLastUpdated()>eng.getLastUpdated()) eng=f; }
+    if(eng){ pr.setProperty(kalit,eng.getId()); return tzQoy(SpreadsheetApp.openById(eng.getId())); }
+    throw new Error('Жадвал топилмади: ID нотўғри ('+(xato||'бўш')+') ва Drive\'да «'+SOZ.JADVAL_NOM+'» номли жадвал йўқ — тўлиқ ҳаволани JADVAL_ID га қўйинг');
+  }
+  throw new Error('Illegal spreadsheet id — JADVAL_ID нотўғри ёки жадвалга рухсат йўқ ('+(xato||'JADVAL_ID киритилмаган')+')'); }
+function tzQoy(ss){ if(!_tz&&!TZ_JADVAL) _tz=ss.getSpreadsheetTimeZone(); return ss; }
 function sarlavhaTop(vals,xarita,tayanch){ var eng=null;
   for(var r=0;r<Math.min(15,vals.length);r++){ var u=ustunlar(vals[r],xarita),ok=true,n=0;
     tayanch.forEach(function(k){ if(u[k]<0) ok=false; }); if(!ok) continue;
@@ -235,4 +250,4 @@ function varaqTop(ss,nomlar,xarita,tayanch,tashla){ var hamma=ss.getSheets(),tar
   throw new Error('Керакли варағи топилмади ('+tayanch.join(', ')+' устунлари бор варақ йўқ). Варақлар: '+hamma.map(function(s){return s.getName()}).join(', ')); }
 function tashxisUmumiy(){ var ss=ochJadval(), t=varaqTop(ss,SOZ.VARAQ,XARITA,TAYANCH,SOZ.TASHLA), top={},yoq=[];
   for(var k in XARITA){ if(t.ust[k]>=0) top[k]=String(t.sar[t.ust[k]]); else yoq.push(k); }
-  return {ok:true,jadval:ss.getName(),varaq:t.nom,sarlavhaQatori:t.qator+1,topildi:top,topilmadi:yoq,varaqlar:ss.getSheets().map(function(s){return s.getName()})}; }
+  return {ok:true,jadval:ss.getName(),jadvalId:ss.getId(),varaq:t.nom,sarlavhaQatori:t.qator+1,topildi:top,topilmadi:yoq,varaqlar:ss.getSheets().map(function(s){return s.getName()})}; }
