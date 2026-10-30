@@ -5,7 +5,7 @@
 //  Сўровлар: ?amal=ishlab (Производство) | moliya (Финанс) | sklad (Склад) | baza (бўш — Сотув йўқ)
 //            ?amal=tekshir · ?amal=ustunlar · &yangi=1 (кешсиз)
 // =====================================================================
-var VERSIYA = '1.0';            // ҲАР ЎЗГАРИШДА ОШИРИНГ — кеш калити шунга боғлиқ (акс ҳолда 10 дақиқа эски жавоб қайтади)
+var VERSIYA = '1.1';            // ҲАР ЎЗГАРИШДА ОШИРИНГ — кеш калити шунга боғлиқ (акс ҳолда 10 дақиқа эски жавоб қайтади)
 var TZ_JADVAL = '';             // бўш = биринчи жадвалнинг вақт зонаси
 var SOZ, XARITA, TAYANCH;       // жорий бўлим (tanla() қўяди)
 
@@ -51,7 +51,7 @@ function ishlabShart(){ return jadvalShart(SONLI_ISHLAB, MATNLI_ISHLAB); }
 // =====================================================================
 var SOZ_MOLIYA = {
   // ⚠ Жадвал ҳаволасини брузердан ТЎЛИҚ нусхалаб шу ерга қўйинг
-  JADVAL_ID: 'https://docs.google.com/spreadsheets/d/1AK1iPCFendRxYuw5aU7FlvudP07F3IX8fClbqbM4TOo/edit',
+  JADVAL_ID: 'https://docs.google.com/spreadsheets/d/1AK1iPCFendRxYuw5aU7FlvudP07F3IX8fCIbqbM4TOo/edit',
   VARAQ: ['Финансе','Финанс','Финансе орг','Лист1'],
   TASHLA: /база|статия|статья|стадия|инфо|info|лист6/i, VALYUTA:'UZS', KESH_SONIYA:600
 };
