@@ -5552,6 +5552,13 @@ function mmKun(l){
   l.forEach(function(x){ var d=sanaOqi(x.sana); if(d && d<bugun && x.sana>eng) eng=x.sana });
   if(!eng) return {l:[], nom:'Кеча', matn:kechaMatn()};
   return {l:l.filter(function(x){ return x.sana===eng }), nom:'Охирги кун', matn:dfmt(eng)+' (кеча ёзув йўқ)'} }
+/* Телефон учун рўйхат (намунадаги jlist/jkart — телефонда жадвал яширинади) */
+function mmJlist(l,sarFn,kartFn){
+  if(!l.length) return '<div class="empty">Ёзув топилмади</div>';
+  var g={},t=[]; l.forEach(function(x){ var k=x.sana?dfmt(x.sana):'Санасиз'; if(!g[k]){ g[k]=[]; t.push(k) } g[k].push(x) });
+  return '<div class="jlist">'+t.map(function(k){ return '<div class="jkun"><div class="jsar"><b>'+k+'</b><span>'+sarFn(g[k])+'</span></div>'+g[k].map(kartFn).join('')+'</div>' }).join('')+'</div>' }
+function mmJkart(nom,meta,miq,xod,rang){ return '<div class="jkart"><div class="jchap"><div class="jnom">'+esc(nom)+'</div><div class="jmeta">'+esc(meta)+'</div></div>'+
+  '<div class="jong"><div class="jmiq"'+(rang?' style="color:'+rang+'"':'')+'>'+miq+'</div><div class="jxod">'+esc(xod)+'</div></div></div>' }
 function mmShuOy(l){ var o=new Date(), p=o.getFullYear()+'-'+('0'+(o.getMonth()+1)).slice(-2);
   return l.filter(function(x){ return String(x.sana||'').slice(0,7)===p }) }
 
@@ -5610,6 +5617,8 @@ itLitsenziya=function(){
         '<td style="color:var(--muted);font-size:12px">'+esc(x.izoh||'')+'</td></tr>' }).join('')
       :'<tr><td colspan="9" style="padding:26px;text-align:center;color:var(--muted)">Ёзув топилмади</td></tr>')+
     '</tbody></table></div></div>'+
+    '<div class="jfaqat">'+mmJlist(kes,function(g){ return g.length+' та · '+mmSon(ishJam(g).soni)+' шт/кв' },function(x){
+      return mmJkart(x.tovar||'—',[x.nomi,x.tur,x.izoh].filter(Boolean).join(' · '),mmSon(x.soni),x.montajnik||'—') })+'</div>'+
     (l.length>kes.length?'<div class="sub" style="margin-top:10px">Охирги '+kes.length+' таси кўрсатилди (жами '+fmt(l.length)+')</div>':'');
   return h };
 
@@ -5828,7 +5837,14 @@ function skTovarSahifa(){
         '<td><span class="sk-hp '+x.holat+'">'+({bor:'Бор',minus:'Минус',yoq:'Тугаган'})[x.holat]+'</span></td>'+
         '<td class="num" style="color:var(--muted)">'+(x.oxirgi?dqisqa(x.oxirgi):'—')+'</td></tr>' }).join('')
       :'<tr><td colspan="9" style="padding:26px;text-align:center;color:var(--muted)">Товар топилмади</td></tr>')+
-    '</tbody></table></div></div>'+(fl.length>500?'<div class="sub" style="margin-top:10px">Биринчи 500 таси (жами '+fmt(fl.length)+')</div>':'');
+    '</tbody></table></div></div>'+
+    '<div class="jfaqat">'+(fl.length?'<div class="jlist"><div class="jkun"><div class="jsar"><b>'+fmt(fl.length)+' та товар</b><span>'+
+      ({bor:'омборда бор',minus:'минусда',yoq:'тугаган',hammasi:'ҳаммаси'})[S.skQ]+'</span></div>'+fl.slice(0,500).map(function(x){
+        var sk=sl.length>1?sl.map(function(s){ return s.replace('Склад ','С')+': '+(x.sk[s]==null?'—':mmSon(x.sk[s])) }).join(' · '):'';
+        return mmJkart(x.tovar,[x.nomi,x.tur,sk].filter(Boolean).join(' · '),mmSon(x.qoldiq)+' '+skBirlik(x.kv),
+          ({bor:'Бор',minus:'Минус',yoq:'Тугаган'})[x.holat]+(x.oxirgi?' · '+dqisqa(x.oxirgi):''),x.qoldiq<0?'var(--no)':x.qoldiq>0?'var(--ok)':'var(--muted)') }).join('')+'</div></div>'
+      :'<div class="empty">Товар топилмади</div>')+'</div>'+
+    (fl.length>500?'<div class="sub" style="margin-top:10px">Биринчи 500 таси (жами '+fmt(fl.length)+')</div>':'');
   return h }
 
 /* ── 3. ҲАРАКАТЛАР ── */
@@ -5883,7 +5899,10 @@ function skHarakat(){
         '<td><span style="color:'+skRang(x.sklad)+'">●</span> '+esc(x.sklad)+'</td><td style="color:var(--muted)">'+esc(x.tur)+'</td>'+
         '<td style="color:var(--muted)">'+esc(x.qaerdan||'')+'</td><td style="color:var(--muted);font-size:12px;white-space:normal;min-width:140px">'+esc(x.izoh||'')+'</td></tr>' }).join('')
       :'<tr><td colspan="8" style="padding:26px;text-align:center;color:var(--muted)">Ёзув топилмади</td></tr>')+
-    '</tbody></table></div></div>'+(l.length>kes.length?'<div class="sub" style="margin-top:10px">Охирги '+kes.length+' таси (жами '+fmt(l.length)+')</div>':'');
+    '</tbody></table></div></div>'+
+    '<div class="jfaqat">'+mmJlist(kes,function(g){ var o=skHarJam(g); return g.length+' та · ↑ '+mmSon(o.kSht+o.kKv)+' · ↓ '+mmSon(o.cSht+o.cKv) },function(x){ var k=x.harakat==='kirim';
+      return mmJkart(x.tovar,[x.nomi,x.sklad,x.qaerdan,x.izoh].filter(function(t){ return t&&t!=='—' }).join(' · '),(k?'+':'−')+mmSon(x.soni)+' '+skBirlik(mmKv(x.birlik)),k?'Приход':'Расход',k?'var(--ok)':'var(--no)') })+'</div>'+
+    (l.length>kes.length?'<div class="sub" style="margin-top:10px">Охирги '+kes.length+' таси (жами '+fmt(l.length)+')</div>':'');
   return h }
 
 rosUmumiy=function(){ var h0=mmHolat(D.ros,D.rosXato,'Склад',rosUlangan()); if(h0) return h0;
